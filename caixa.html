@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caixa</title>
+<style>
+ body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
+ .container { max-width:1100px; margin:auto; background:#fff; padding:20px; border-radius:10px; }
+ table { width:100%; border-collapse:collapse; margin-top:15px; }
+ th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+ h2, h3 { text-align:center; }
+ label { font-weight:bold; }
+ input, button { padding:8px; margin:5px 0; }
+ .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+ .box { background:#fafafa; padding:15px; border-radius:8px; }
+</style>
+</head>
+<body>
+<div class="container"><h2>CAIXA</h2><div class="box">
+  <label>De:</label>
+  <input type="date" id="dataDe">
+  <label>Até:</label>
+  <input type="date" id="dataAte">
+  <button onclick="atualizarCaixa()">Consultar</button>
+</div><div class="grid">
+  <div class="box">
+    <h3>Resumo Financeiro</h3>
+    <p><b>Saldo Anterior:</b> R$ <span id="saldoAnterior">0.00</span></p>
+    <p><b>Apurado Total:</b> R$ <span id="apuradoTotal">0.00</span></p>
+    <p><b>Total Despesas:</b> R$ <span id="totalDespesas">0.00</span></p>
+    <p><b>SALDO ATUAL:</b> R$ <span id="saldoAtual">0.00</span></p>
+  </div>  <div class="box">
+    <h3>Partilha de Recursos</h3>
+    <p><b>Benedito (25%):</b> R$ <span id="partBenedito">0.00</span></p>
+    <p><b>José (25%):</b> R$ <span id="partJose">0.00</span></p>
+    <p><b>Pedro (50%):</b> R$ <span id="partPedro">0.00</span></p>
+  </div>
+</div><h3>RESUMO DOS VENDEDORES</h3>
+<table>
+<thead>
+<tr>
+  <th>Vendedor</th>
+  <th>Recebido</th>
+  <th>Devolvido</th>
+  <th>Vendido</th>
+  <th>Apurado</th>
+</tr>
+</thead>
+<tbody id="tabelaVendedores"></tbody>
+</table><h3>RESUMO DAS DESPESAS</h3>
+<table>
+<thead>
+<tr>
+  <th>Data</th>
+  <th>Descrição</th>
+  <th>Valor</th>
+</tr>
+</thead>
+<tbody id="tabelaDespesas"></tbody>
+</table></div><script>
+function atualizarCaixa() {
+  const de = document.getElementById('dataDe').value;
+  const ate = document.getElementById('dataAte').value;
+  if (!de || !ate) { alert('Informe o período.'); return; }
+
+  let receitas = JSON.parse(localStorage.getItem('receitas')) || [];
+  let despesas = JSON.parse(localStorage.getItem('despesas')) || [];
+  let vendedores = JSON.parse(localStorage.getItem('vendedores')) || [];
+
+  let vendas = JSON.parse(localStorage.getItem('vendasVendedores')) || {};
+
+  let receitasPeriodo = receitas.filter(r => r.data >= de && r.data <= ate);
+  let despesasPeriodo = despesas.filter(d => d.data >= de && d.data <= ate);
+
+  let saldoAnterior = receitasPeriodo.reduce((t,r)=>t+r.valor,0);
+  document.getElementById('saldoAnterior').innerText = saldoAnterior.toFixed(2);
+
+  let totalDespesas = despesasPeriodo.reduce((t,d)=>t+d.valor,0);
+  document.getElementById('totalDespesas').innerText = totalDespesas.toFixed(2);
+
+  let apuradoTotal = 0;
+  let tabelaVend = document.getElementById('tabelaVendedores');
+  tabelaVend.innerHTML = '';
+
+  vendedores.forEach(v => {
+    let vendasV = (vendas[v.id] || []).filter(vd => vd.data >= de && vd.data <= ate);
+    let recebido = vendasV.reduce((t,x)=>t+Number(x.recebido||0),0);
+    let devolvido = vendasV.reduce((t,x)=>t+Number(x.devolvido||0),0);
+    let vendido = recebido - devolvido;
+    let apurado = vendasV.reduce((t,x)=>t+Number(x.apurado||0),0);
+
+    apuradoTotal += apurado;
+
+    tabelaVend.innerHTML += `
+      <tr>
+        <td>${v.nome}</td>
+        <td>${recebido.toFixed(0)}</td>
+        <td>${devolvido.toFixed(0)}</td>
+        <td>${vendido.toFixed(0)}</td>
+        <td>${apurado.toFixed(2)}</td>
+      </tr>`;
+  });
+
+  document.getElementById('apuradoTotal').innerText = apuradoTotal.toFixed(2);
+
+  let saldoAtual = saldoAnterior + apuradoTotal - totalDespesas;
+  document.getElementById('saldoAtual').innerText = saldoAtual.toFixed(2);
+
+  document.getElementById('partBenedito').innerText = (saldoAtual*0.25).toFixed(2);
+  document.getElementById('partJose').innerText = (saldoAtual*0.25).toFixed(2);
+  document.getElementById('partPedro').innerText = (saldoAtual*0.50).toFixed(2);
+
+  let tabelaDesp = document.getElementById('tabelaDespesas');
+  tabelaDesp.innerHTML = '';
+  despesasPeriodo.forEach(d => {
+    tabelaDesp.innerHTML += `
+      <tr>
+        <td>${d.data}</td>
+        <td>${d.descricao}</td>
+        <td>${d.valor.toFixed(2)}</td>
+      </tr>`;
+  });
+}
+</script></body>
+</html>

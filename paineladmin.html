@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Admin</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      height: 100vh;
+    }/* MENU LATERAL */
+.menu {
+  width: 250px;
+  background: #1e3c72;
+  color: #fff;
+  padding: 20px;
+}
+
+.menu h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.menu a {
+  display: block;
+  padding: 12px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: 0.3s;
+}
+
+.menu a:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* CONTEÚDO PRINCIPAL */
+.conteudo {
+  flex: 1;
+  padding: 20px;
+}
+
+.topo {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout {
+  padding: 10px 20px;
+  border: none;
+  background: #d9534f;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+  </style>
+</head>
+<body>  <div class="menu">
+    <h2>Painel</h2>
+    <a href="#">Cadastro de Vendedor</a>
+    <a href="#">Caixa</a>
+    <a href="#">Despesas</a>
+    <a href="#">Relatórios</a>
+    <a href="#">Backup</a>
+    <a href="#">Reset</a>
+  </div>  <div class="conteudo">
+    <div class="topo">
+      <div>
+        <h3 id="nomeUsuario">Carregando...</h3>
+        <small id="hora"></small>
+      </div>
+      <button class="logout" onclick="logout()">Sair</button>
+    </div><h2>Bem-vindo ao Sistema</h2>
+<p>Escolha uma opção no menu ao lado.</p>
+
+  </div><script>
+  // Verificação de login
+  const userData = localStorage.getItem("usuarioLogado");
+  if(!userData){
+    window.location.href = "index.html";
+  }
+
+  const usuario = JSON.parse(userData);
+  document.getElementById("nomeUsuario").innerText = "Usuário: " + (usuario.displayName || usuario.nome || "Indefinido");
+
+  // Relógio
+  function atualizarHora(){
+    const agora = new Date();
+    const h = agora.toLocaleTimeString();
+    const d = agora.toLocaleDateString();
+    document.getElementById("hora").innerText = d + " - " + h;
+  }
+  setInterval(atualizarHora, 1000);
+  atualizarHora();
+
+  // Logout
+  function logout(){
+    localStorage.removeItem("usuarioLogado");
+    window.location.href = "index.html";
+  }
+</script></body>
+</html>

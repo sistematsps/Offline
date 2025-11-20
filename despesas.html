@@ -1,0 +1,154 @@
+<!DOCTYPE html><html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Despesas</title>
+<style>
+ body { font-family: Arial; background:#f4f4f4; padding:20px; }
+ h2 { margin-top:0; }
+ .card { background:white; padding:15px; border-radius:10px; margin-bottom:20px; }
+ input, button { padding:8px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+ table { width:100%; border-collapse:collapse; margin-top:10px; }
+ table, th, td { border:1px solid #ccc; }
+ th, td { padding:8px; text-align:center; }
+ button { cursor:pointer; border:none; }
+ .btn-add { background:#2196f3; color:#fff; }
+ .btn-del { background:#f44336; color:#fff; }
+ .btn-edit { background:#ff9800; color:#fff; }
+ .btn-pdf { background:#e91e63; color:#fff; }
+ .flex { display:flex; gap:10px; }
+</style>
+</head>
+<body><h2>Controle de Despesas</h2><div class="card">
+  <h3>Nova Despesa</h3>
+  <label>Data:</label>
+  <input type="date" id="dataDespesa"><br><label>Descrição:</label> <input type="text" id="descDespesa"><br>
+
+<label>Valor:</label> <input type="number" id="valorDespesa" step="0.01"><br>
+
+<button class="btn-add" onclick="salvarDespesa()">Adicionar</button>
+
+</div><div class="card">
+  <h3>Filtro</h3>
+  <div class="flex">
+    <div>
+      <label>De:</label>
+      <input type="date" id="filtroDe">
+    </div>
+    <div>
+      <label>Até:</label>
+      <input type="date" id="filtroAte">
+    </div>
+  </div>
+  <button onclick="filtrarDespesas()">Consultar</button>
+</div><div class="card">
+  <h3>Lista de Despesas</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="listaDespesas"></tbody>
+  </table>  <h3>Total: R$ <span id="totalDespesas">0.00</span></h3><button class="btn-pdf" onclick="exportarPDF()">Exportar PDF</button>
+
+</div><script>
+let despesas = JSON.parse(localStorage.getItem("despesas")) || [];
+let editandoID = null;
+
+function salvarDespesa() {
+  const data = document.getElementById("dataDespesa").value;
+  const desc = document.getElementById("descDespesa").value;
+  const valor = document.getElementById("valorDespesa").value;
+
+  if (!data || !desc || !valor) return alert("Preencha todos os campos!");
+
+  if (editandoID) {
+    const d = despesas.find(x => x.id === editandoID);
+    d.data = data;
+    d.desc = desc;
+    d.valor = parseFloat(valor);
+    editandoID = null;
+  } else {
+    despesas.push({
+      id: Date.now(),
+      data,
+      desc,
+      valor: parseFloat(valor)
+    });
+  }
+
+  localStorage.setItem("despesas", JSON.stringify(despesas));
+  limparCampos();
+  listarDespesas();
+}
+
+function limparCampos() {
+  document.getElementById("dataDespesa").value = "";
+  document.getElementById("descDespesa").value = "";
+  document.getElementById("valorDespesa").value = "";
+}
+
+function listarDespesas(listaFiltrada = null) {
+  const corpo = document.getElementById("listaDespesas");
+  corpo.innerHTML = "";
+
+  const lista = listaFiltrada || despesas;
+  let total = 0;
+
+  lista.forEach(d => {
+    total += d.valor;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.data}</td>
+      <td>${d.desc}</td>
+      <td>R$ ${d.valor.toFixed(2)}</td>
+      <td>
+        <button class="btn-edit" onclick="editarDespesa(${d.id})">Editar</button>
+        <button class="btn-del" onclick="excluirDespesa(${d.id})">Excluir</button>
+      </td>
+    `;
+
+    corpo.appendChild(tr);
+  });
+
+  document.getElementById("totalDespesas").textContent = total.toFixed(2);
+}
+
+function excluirDespesa(id) {
+  if (!confirm("Deseja realmente excluir?")) return;
+  despesas = despesas.filter(d => d.id !== id);
+  localStorage.setItem("despesas", JSON.stringify(despesas));
+  listarDespesas();
+}
+
+function editarDespesa(id) {
+  const d = despesas.find(x => x.id === id);
+  document.getElementById("dataDespesa").value = d.data;
+  document.getElementById("descDespesa").value = d.desc;
+  document.getElementById("valorDespesa").value = d.valor;
+  editandoID = id;
+}
+
+function filtrarDespesas() {
+  const de = document.getElementById("filtroDe").value;
+  const ate = document.getElementById("filtroAte").value;
+
+  const lista = despesas.filter(d => {
+    return (!de || d.data >= de) && (!ate || d.data <= ate);
+  });
+
+  listarDespesas(lista);
+}
+
+function exportarPDF() {
+  alert("PDF pronto para gerar! Posso ativar agora em ReportLab (via python_user_visible) se desejar.");
+}
+
+listarDespesas();
+</script></body>
+</html>
